@@ -1,0 +1,12 @@
+{
+  "name": "@ecare/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "start:dev": "node --watch src/server.js",
+    "test": "node --test",
+    "build": "node --check src/server.js && node --check src/patients/patients.js"
+  },
+  "engines": { "node": ">=20" }
+}
