@@ -7,9 +7,17 @@ function createAuthenticationMiddleware(options = {}) {
   return async function authenticate(req, res, next) {
     const token = bearerToken(req.headers.authorization);
     if (!token) return res.status(401).json({ error: "unauthorized" });
+
+    let identity;
     try {
-      const identity = await verify(token);
-      const result = await poolFactory().query(
+      identity = await verify(token);
+    } catch {
+      return res.status(401).json({ error: "invalid_access_token" });
+    }
+
+    try {
+      const pool = poolFactory();
+      const result = await pool.query(
         `SELECT u.id, u.email, u.display_name, u.status,
                 m.organization_id, o.code AS organization_code, o.name AS organization_name, m.role
            FROM app_users u
@@ -35,16 +43,12 @@ function createAuthenticationMiddleware(options = {}) {
           role: row.role
         }))
       };
-      await poolFactory().query(
-        "UPDATE app_users SET last_authenticated_at = now() WHERE id = $1",
-        [req.auth.user.id]
-      );
+      await pool.query("UPDATE app_users SET last_authenticated_at = now() WHERE id = $1", [req.auth.user.id]);
       return next();
     } catch (error) {
-      if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
-        return res.status(503).json({ error: "identity_store_unavailable" });
-      }
-      return res.status(401).json({ error: "invalid_access_token" });
+      // Database outages must not be misreported as invalid user credentials.
+      console.error("Authentication identity-store failure", { code: error.code || "unknown" });
+      return res.status(503).json({ error: "identity_store_unavailable" });
     }
   };
 }
