@@ -54,7 +54,7 @@ async function verifyAccessToken(token, env = process.env) {
 
 function bearerToken(header) {
   if (typeof header !== "string") return null;
-  const match = /^Bearer\\s+([^\\s]+)$/i.exec(header);
+  const match = /^Bearer\s+([^\s]+)$/i.exec(header);
   return match ? match[1] : null;
 }
 
