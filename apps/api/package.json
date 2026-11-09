@@ -1,12 +1,17 @@
 {
   "name": "@ecare/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "start": "node src/server.js",
     "start:dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
     "test": "node --test",
-    "build": "node --check src/server.js && node --check src/patients/patients.js"
+    "build": "node --check src/server.js && node --check src/auth/oidc.js && node --check src/db/pool.js && node --check src/db/migrate.js"
+  },
+  "dependencies": {
+    "jose": "6.1.0",
+    "pg": "8.16.3"
   },
   "engines": { "node": ">=20" }
 }
