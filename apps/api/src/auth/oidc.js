@@ -8,7 +8,7 @@ function getOidcConfig(env = process.env) {
   const issuer = env.OIDC_ISSUER;
   const audience = env.OIDC_AUDIENCE;
   if (!issuer || !audience) throw new Error("OIDC_ISSUER and OIDC_AUDIENCE must be configured");
-  return { issuer: issuer.replace(/\/$/, ""), audience, jwksUrl: env.OIDC_JWKS_URI || null };
+  return { issuer, audience, jwksUrl: env.OIDC_JWKS_URI || null };
 }
 
 async function resolveJwks(config) {
@@ -18,13 +18,13 @@ async function resolveJwks(config) {
   let jwksUrl = config.jwksUrl;
   if (!jwksUrl) {
     if (!discoveryPromise || cachedIssuer !== config.issuer) {
-      discoveryPromise = fetch(`${config.issuer}/.well-known/openid-configuration`, {
+      discoveryPromise = fetch(`${config.issuer.replace(/\/$/, "")}/.well-known/openid-configuration`, {
         headers: { accept: "application/json" },
         signal: AbortSignal.timeout(5000)
       }).then(async response => {
         if (!response.ok) throw new Error("OIDC discovery endpoint unavailable");
         const metadata = await response.json();
-        if (metadata.issuer?.replace(/\/$/, "") !== config.issuer || typeof metadata.jwks_uri !== "string") {
+        if (metadata.issuer !== config.issuer || typeof metadata.jwks_uri !== "string") {
           throw new Error("OIDC discovery metadata is invalid");
         }
         return metadata.jwks_uri;
